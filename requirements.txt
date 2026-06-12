@@ -1,4 +1,6 @@
 aiogram
 gspread
-oauth2client
+google-auth
+gspread-auth
 python-dotenv
+
