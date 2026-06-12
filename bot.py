@@ -91,11 +91,7 @@ async def ready_to_upload(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.message(OrderState.waiting_for_file, F.document)
 async def handle_file(message: types.Message, state: FSMContext):
-    # XML ফাইল ব্লক করার সিস্টেম
-    if message.document.file_name.lower().endswith('.xml'):
-        await message.answer("দুঃখিত, আপনি XML ফাইল পাঠাতে পারবেন না। অন্য ফরম্যাট পাঠান।")
-        return
-
+    # XML ফাইল এখন এলাউ করা হয়েছে
     if message.document.file_size > MAX_FILE_SIZE:
         await message.answer("Error: File is too large! Max 10MB.")
         return
@@ -122,7 +118,7 @@ async def finalize_order(message: types.Message, state: FSMContext):
         row = [data['token'], data.get('username', 'None'), str(data['user_id']), str(datetime.now()), data['service'], data['pay_method'], payment_number, data['file_name'], data['file_id'], "Pending"]
         sheet.append_row(row)
         
-        # অ্যাডমিনকে সুন্দরভাবে সব তথ্য পাঠানো
+        # অ্যাডমিনকে তথ্য পাঠানো
         admin_text = (f"✅ New Order!\nToken: {data['token']}\nType: {data['service']}\n"
                       f"User: @{data.get('username', 'None')}\nPayment Number: {payment_number}\nFile: {data['file_name']}")
         await bot.send_document(ADMIN_ID, data['file_id'], caption=admin_text)
