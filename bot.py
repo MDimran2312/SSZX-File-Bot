@@ -2,9 +2,10 @@ import logging
 import os
 import uuid
 import gspread
+import json
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
@@ -20,9 +21,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 SHEET_NAME = os.getenv("SHEET_NAME")
 
-# --- Google Sheets Setup (ফাইল-ভিত্তিক কানেকশন) ---
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_file('credentials.json', scopes=scope)
+# Google Sheets Setup
+scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets']
+creds_dict = json.loads(os.getenv("GOOGLE_JSON"))
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open(SHEET_NAME).sheet1
 
@@ -57,7 +59,8 @@ def get_payment_kb():
         [InlineKeyboardButton(text="Rocket", callback_data="pay_rocket"), InlineKeyboardButton(text="Binance", callback_data="pay_binance")]
     ])
 
-# --- Logic (সব সেটিং ঠিক রাখা হয়েছে) ---
+# --- Logic ---
+
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("Welcome to Secure Surf Zone X. Please verify your membership.",
@@ -91,10 +94,12 @@ async def handle_file(message: types.Message, state: FSMContext):
     if message.document.file_size > MAX_FILE_SIZE:
         await message.answer("Error: File is too large! Max 10MB.")
         return
+
     token = str(uuid.uuid4())[:8].upper()
     await state.update_data(token=token, file_id=message.document.file_id, 
                             file_name=message.document.file_name, 
                             username=message.from_user.username, user_id=message.from_user.id)
+    
     await message.answer(f"File '{message.document.file_name}' received! Token: {token}.\nNow select your payment method.", reply_markup=get_payment_kb())
     await state.set_state(OrderState.waiting_for_payment_method)
 
@@ -111,6 +116,7 @@ async def finalize_order(message: types.Message, state: FSMContext):
     try:
         row = [data['token'], data.get('username', 'None'), str(data['user_id']), str(datetime.now()), data['service'], data['pay_method'], payment_number, data['file_name'], data['file_id'], "Pending"]
         sheet.append_row(row)
+        
         admin_text = (f"✅ New Order!\nToken: {data['token']}\nType: {data['service']}\n"
                       f"User: @{data.get('username', 'None')}\nPayment Number: {payment_number}\nFile: {data['file_name']}")
         await bot.send_document(ADMIN_ID, data['file_id'], caption=admin_text)
@@ -119,19 +125,29 @@ async def finalize_order(message: types.Message, state: FSMContext):
         await message.answer(f"Error saving data: {e}")
     await state.clear()
 
+# --- Admin Panel ---
+
 @dp.message(Command("get_data"))
 async def export_data(message: types.Message):
     if message.from_user.id == ADMIN_ID:
-        records = sheet.get_all_records()
-        root = ET.Element("SecureSurfZoneX_Data")
-        for record in records:
-            order = ET.SubElement(root, "Order")
-            for k, v in record.items():
-                child = ET.SubElement(order, str(k).replace(" ", "_"))
-                child.text = str(v)
-        tree = ET.ElementTree(root)
-        tree.write("orders.xml", encoding="utf-8", xml_declaration=True)
-        await message.answer_document(FSInputFile("orders.xml"))
+        try:
+            records = sheet.get_all_records()
+            root = ET.Element("SecureSurfZoneX_Data")
+            for record in records:
+                order = ET.SubElement(root, "Order")
+                for k, v in record.items():
+                    child = ET.SubElement(order, str(k).replace(" ", "_"))
+                    child.text = str(v)
+            
+            # ফাইলের সঠিক পাথ তৈরি
+            file_path = "orders.xml"
+            tree = ET.ElementTree(root)
+            tree.write(file_path, encoding="utf-8", xml_declaration=True)
+            
+            # ফাইলটি পাঠানোর চেষ্টা
+            await message.answer_document(FSInputFile(file_path))
+        except Exception as e:
+            await message.answer(f"Error: {e}")
 
 @dp.message(Command("done"))
 async def mark_done(message: types.Message):
