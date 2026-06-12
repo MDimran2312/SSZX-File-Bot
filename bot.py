@@ -21,49 +21,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 SHEET_NAME = os.getenv("SHEET_NAME")
 
-# --- Google Sheets Setup (Updated) ---
+# Google Sheets Setup
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets']
-
-creds_dict = {
-    "type": "service_account",
-    "project_id": "cool-beanbag-499205-a4",
-    "private_key_id": "99dd1db3a2773bc3ac7a2e2ff7d049a14a6413c0",
-    "private_key": "-----BEGIN PRIVATE KEY-----\n" + 
-                   "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC3xZoSqJEgERI/\n" +
-                   "5hE5/GIyrGv7jPNA+yim0R5bEGcuEvhhoIvWr6gsQ6vdW/Ayd/ry/rYfUUAOyPYP\n" +
-                   "jngye3jR4KesWQVbixj3hpqIHc3qk6izve8ke5Xrat8lGUlfwtbTRINcCIpJsjCa\n" +
-                   "mWctGH2JhzQRxI2lTqcm3GIyYU3J5p66Kwu0zxNKozq67Ewd0n3NbQ+ztausyOZ2\n" +
-                   "TMabdevAzPDvgrDEVdLErX/hma9mLtL2uZHfat8ZKG4DtnzF8YJaW9PNrBRA8mOj\n" +
-                   "3WT5lqOM0h8EWLO8O0ZTVkYd2vMpGuNoH/GBEYZ6NJwv4GAF5G0D3hsymIZyg77v\n" +
-                   "4lmRQfLNAgMBAAECggEABMh4GuG3y0Oee7rHeoCi5qo9skGoKCoRVAwv09NwuA6G\n" +
-                   "1/Wnhhoy0JofTEbjENE2HyJ5h4WkGu5olx2Qa9HyYlYMTyxO+yO67eBbP800yZT3\n" +
-                   "yFvacFLmI0c4ER1gH0WxNTT8jUXsoX/pi3CQMqiHRe/Wr1q0DBgouhZ02NZXAbj7\n" +
-                   "Wl1BYMcK6RYl68cdozL0LzCCEubodWjmfMWrHUJAhJXEEM15Y3WMDpduxYd5a2Jd\n" +
-                   "X9Qzt3xHcQpvyxSwPpGCrry1wMrlk3o8fZQcwn+/q4zFtonoA1ARmttR5MqxaAbc\n" +
-                   "LicvpcsftwAf7GSFldhtacxD/EpdlHfuNg6gbnq6MQKBgQDnueDZgvTVKnQ0QYWG\n" +
-                   "ZLpO33yMuEGdKSOq41vz27T15L85NIhsvWYfP75CP52iBUqdJ1xt/j3YAW6FtijH\n" +
-                   "UZbFfONSzxJqvi1Ua4Oulo8nC236KGAL6Khcbh6xmvleemtF+iVxk2u59T6M7NEQ\n" +
-                   "d25C5u34DzMpQV2TTf3vSPxbXQKBgQDLBcBivaodFq6q76jSDrOllYz3+8szDHcP\n" +
-                   "kxFB+D3caGlRvYXjFcQ2hNLSLkXmTcBDvQrjnfC+Z9mZbtYvu03n3RL5zx1gqmG1\n" +
-                   "/MpfSS00zBCfR0LTPe5mb5pLqvoqDfwWZIGG8pjaa7JY37b0QJr4cKf7IiSC2YAd\n" +
-                   "5uDtb9TuMQKBgQC3ALAXd3m9wzpkbn5yBaixU4Q8aeO/p1a4xbe/3XqLWyy9k8RO\n" +
-                   "BEHbWe76yNzHsOAdPpGbeFcE+RR82sBXsRKeQqQQqOJFlI2eBw7G2baSQk+HaU14\n" +
-                   "+jPEU19AKkDYIVwItqXNjXxdLtZIW1o8Y+WbRl8XMYHZCftJsyVhTUWnLQKBgQCB\n" +
-                   "Nqzma05M6zXKB3SMFN1TouYwoqoGWIWifPi74vIESNPXOWdwS1cxV8ISEW9dj9ix\n" +
-                   "hCzdB5XEqbX9iGR7xptj2fmM0rwg3PAJctWeZaWG9+YQabtnVQBZY+hxBmXnxDTQ\n" +
-                   "T7F8oQSV53uAQwpfVIsNWi4fkPBp82IuJda8Z7O+0QKBgQDZHwxUqm81Bl9yZ2cV\n" +
-                   "kwsI/zhd9ydjzn/iYAbX5qLjxuheO35F/CvPFgdixll0F3jLUXkLf9B6O8YRsbeW\n" +
-                   "nd7xFe12Nw8dsFdgW/5uspkxcNZCz6m49haY+sIrcNI3JFzNw4zLFRaqARUcXOC1\n" +
-                   "ofwyY/qy80zFsqRqHd6zvzfQUQ==\n-----END PRIVATE KEY-----",
-    "client_email": "sszx-file-bot@cool-beanbag-499205-a4.iam.gserviceaccount.com",
-    "client_id": "118306384012241479853",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sszx-file-bot%40cool-beanbag-499205-a4.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
-}
-
+creds_dict = json.loads(os.getenv("GOOGLE_JSON"))
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open(SHEET_NAME).sheet1
@@ -80,7 +40,7 @@ class OrderState(StatesGroup):
     waiting_for_payment_method = State()
     waiting_for_payment_number = State()
 
-# --- Keyboards (আপনার সব কিবোর্ড ঠিক আছে) ---
+# --- Keyboards ---
 def get_main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Instagram", callback_data="insta_menu")]])
 
@@ -99,7 +59,8 @@ def get_payment_kb():
         [InlineKeyboardButton(text="Rocket", callback_data="pay_rocket"), InlineKeyboardButton(text="Binance", callback_data="pay_binance")]
     ])
 
-# --- Logic (আপনার আগের সব লজিক অটুট) ---
+# --- Logic ---
+
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("Welcome to Secure Surf Zone X. Please verify your membership.",
@@ -130,6 +91,7 @@ async def ready_to_upload(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.message(OrderState.waiting_for_file, F.document)
 async def handle_file(message: types.Message, state: FSMContext):
+    # XML ফাইল এখন এলাউ করা হয়েছে
     if message.document.file_size > MAX_FILE_SIZE:
         await message.answer("Error: File is too large! Max 10MB.")
         return
@@ -156,6 +118,7 @@ async def finalize_order(message: types.Message, state: FSMContext):
         row = [data['token'], data.get('username', 'None'), str(data['user_id']), str(datetime.now()), data['service'], data['pay_method'], payment_number, data['file_name'], data['file_id'], "Pending"]
         sheet.append_row(row)
         
+        # অ্যাডমিনকে তথ্য পাঠানো
         admin_text = (f"✅ New Order!\nToken: {data['token']}\nType: {data['service']}\n"
                       f"User: @{data.get('username', 'None')}\nPayment Number: {payment_number}\nFile: {data['file_name']}")
         await bot.send_document(ADMIN_ID, data['file_id'], caption=admin_text)
@@ -164,7 +127,7 @@ async def finalize_order(message: types.Message, state: FSMContext):
         await message.answer(f"Error saving data: {e}")
     await state.clear()
 
-# --- Admin Panel (সব কমান্ড ঠিক আছে) ---
+# --- Admin Panel ---
 @dp.message(Command("get_data"))
 async def export_data(message: types.Message):
     if message.from_user.id == ADMIN_ID:
