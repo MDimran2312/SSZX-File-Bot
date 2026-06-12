@@ -22,7 +22,7 @@ ADMIN_ID = int(os.getenv("ADMIN_ID"))
 SHEET_NAME = os.getenv("SHEET_NAME")
 
 # Google Sheets Setup
-​scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets']
 creds_dict = json.loads(os.getenv("GOOGLE_JSON"))
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
