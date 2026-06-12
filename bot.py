@@ -26,6 +26,7 @@ scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis
 creds_dict = json.loads(os.getenv("GOOGLE_JSON"))
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
+# নিশ্চিত করুন আপনার গুগল শিটের নাম এখানে "MyDataSheet" দেওয়া আছে
 sheet = client.open("mydatasheet").sheet1
 
 # বট ইনিশিয়ালাইজেশন
@@ -59,14 +60,21 @@ def get_payment_kb():
         [InlineKeyboardButton(text="Rocket", callback_data="pay_rocket"), InlineKeyboardButton(text="Binance", callback_data="pay_binance")]
     ])
 
+def get_admin_kb():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📥 Get All Data (XML)", callback_data="admin_get_data")],
+        [InlineKeyboardButton(text="📢 Broadcast", callback_data="admin_broadcast")],
+        [InlineKeyboardButton(text="🔍 Search Order", callback_data="admin_search")]
+    ])
+
 # --- Logic ---
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("Welcome to Secure Surf Zone X. Please verify your membership.",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Join Channel 1", url="https://t.me/yourchannel1")],
-            [InlineKeyboardButton(text="Join Channel 2", url="https://t.me/yourchannel2")],
+            [InlineKeyboardButton(text="Join Channel 1", url="https://t.me/Cyber_Shield_official")],
+            [InlineKeyboardButton(text="Join Channel 2", url="https://t.me/fegasus_1")],
             [InlineKeyboardButton(text="Verify Join", callback_data="verified")]
         ]))
 
@@ -127,27 +135,34 @@ async def finalize_order(message: types.Message, state: FSMContext):
 
 # --- Admin Panel ---
 
-@dp.message(Command("get_data"))
-async def export_data(message: types.Message):
+@dp.message(Command("admin"))
+async def admin_panel(message: types.Message):
     if message.from_user.id == ADMIN_ID:
-        try:
-            records = sheet.get_all_records()
-            root = ET.Element("SecureSurfZoneX_Data")
-            for record in records:
-                order = ET.SubElement(root, "Order")
-                for k, v in record.items():
-                    child = ET.SubElement(order, str(k).replace(" ", "_"))
-                    child.text = str(v)
-            
-            # ফাইলের সঠিক পাথ তৈরি
-            file_path = "orders.xml"
-            tree = ET.ElementTree(root)
-            tree.write(file_path, encoding="utf-8", xml_declaration=True)
-            
-            # ফাইলটি পাঠানোর চেষ্টা
-            await message.answer_document(FSInputFile(file_path))
-        except Exception as e:
-            await message.answer(f"Error: {e}")
+        await message.answer("🛡️ **Secure Surf Zone X Admin Panel**", reply_markup=get_admin_kb())
+    else:
+        await message.answer("আপনি অ্যাডমিন নন।")
+
+@dp.callback_query(F.data.startswith("admin_"))
+async def admin_callback(callback: types.CallbackQuery):
+    if callback.from_user.id != ADMIN_ID: return
+    action = callback.data.split("_")[1]
+    
+    if action == "get_data":
+        records = sheet.get_all_records()
+        root = ET.Element("SecureSurfZoneX_Data")
+        for record in records:
+            order = ET.SubElement(root, "Order")
+            for k, v in record.items():
+                child = ET.SubElement(order, str(k).replace(" ", "_"))
+                child.text = str(v)
+        file_path = "orders.xml"
+        tree = ET.ElementTree(root)
+        tree.write(file_path, encoding="utf-8", xml_declaration=True)
+        await callback.message.answer_document(FSInputFile(file_path))
+    elif action == "broadcast":
+        await callback.message.answer("ব্রডকাস্ট করতে লিখুন: /broadcast আপনার মেসেজ")
+    elif action == "search":
+        await callback.message.answer("সার্চ করতে লিখুন: /search [TOKEN]")
 
 @dp.message(Command("done"))
 async def mark_done(message: types.Message):
@@ -157,10 +172,9 @@ async def mark_done(message: types.Message):
             cell = sheet.find(token)
             sheet.update_cell(cell.row, 10, "Success")
             user_id = sheet.cell(cell.row, 3).value
-            await bot.send_message(user_id, f"✅ আপনার পেমেন্ট সাকসেসফুল হয়েছে! টোকেন: {token}")
+            await bot.send_message(user_id, f"✅ আপনার অর্ডার সাকসেসফুল হয়েছে! টোকেন: {token}")
             await message.answer(f"Token {token} marked Success!")
-        except Exception as e:
-            await message.answer("Token not found or error occurred.")
+        except: await message.answer("Error.")
 
 @dp.message(Command("broadcast"))
 async def broadcast(message: types.Message):
@@ -174,13 +188,13 @@ async def broadcast(message: types.Message):
 
 @dp.message(Command("search"))
 async def search_order(message: types.Message):
-    try:
-        token = message.text.split(" ")[1].upper()
-        cell = sheet.find(token)
-        row = sheet.row_values(cell.row)
-        await message.answer(f"Token: {row[0]}\nStatus: {row[9]}\nFile: {row[7]}\nUser: @{row[1]}\nPayment Number: {row[6]}")
-    except:
-        await message.answer("Token not found!")
+    if message.from_user.id == ADMIN_ID:
+        try:
+            token = message.text.split(" ")[1].upper()
+            cell = sheet.find(token)
+            row = sheet.row_values(cell.row)
+            await message.answer(f"Token: {row[0]}\nStatus: {row[9]}\nFile: {row[7]}\nUser: @{row[1]}\nPayment Number: {row[6]}")
+        except: await message.answer("Token not found!")
 
 if __name__ == "__main__":
     dp.run_polling(bot)
