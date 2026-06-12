@@ -26,7 +26,7 @@ scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/au
 creds_dict = json.loads(os.getenv("GOOGLE_JSON"))
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
-sheet = client.open(SecureSurfZoneX_Data).sheet1
+sheet = client.open("SecureSurfZoneX_Data").sheet1
 
 # বট ইনিশিয়ালাইজেশন
 bot = Bot(token=BOT_TOKEN)
