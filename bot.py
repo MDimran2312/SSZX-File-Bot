@@ -97,11 +97,11 @@ async def process_verify(callback: types.CallbackQuery):
         if member1.status in allowed_statuses and member2.status in allowed_statuses:
             await callback.message.edit_text("Verified! Select Service:", reply_markup=get_main_menu())
         else:
-            await callback.answer("❌ আপনি এখনও সব চ্যানেলে জয়েন করেননি! দয়া করে দুটি চ্যানেলেই জয়েন করে আবার চেষ্টা করুন।", show_alert=True)
+            await callback.answer("❌ Access Denied! Please join both channels first and try again.", show_alert=True)
             
     except Exception as e:
         # বট যদি চ্যানেলে অ্যাডমিন না থাকে তবে এই এরর আসতে পারে
-        await callback.answer("⚠️ ভেরিফিকেশন চেক করতে সমস্যা হচ্ছে। নিশ্চিত করুন বটটি চ্যানেলে অ্যাডমিন আছে কিনা।", show_alert=True)
+        await callback.answer("⚠️ Verification Error! Make sure the bot is an Admin in the channels.", show_alert=True)
 
 @dp.callback_query(F.data == "insta_menu")
 async def insta_menu(callback: types.CallbackQuery):
@@ -161,7 +161,7 @@ async def admin_panel(message: types.Message):
     if message.from_user.id == ADMIN_ID:
         await message.answer("🛡️ **Secure Surf Zone X Admin Panel**", reply_markup=get_admin_kb())
     else:
-        await message.answer("আপনি অ্যাডমিন নন।")
+        await message.answer("Access Denied! You are not an admin.")
 
 @dp.callback_query(F.data.startswith("admin_"))
 async def admin_callback(callback: types.CallbackQuery):
@@ -181,9 +181,9 @@ async def admin_callback(callback: types.CallbackQuery):
         tree.write(file_path, encoding="utf-8", xml_declaration=True)
         await callback.message.answer_document(FSInputFile(file_path))
     elif action == "broadcast":
-        await callback.message.answer("ব্রডকাস্ট করতে লিখুন: /broadcast আপনার মেসেজ")
+        await callback.message.answer("To broadcast, type: /broadcast your_message")
     elif action == "search":
-        await callback.message.answer("সার্চ করতে লিখুন: /search [TOKEN]")
+        await callback.message.answer("To search, type: /search [TOKEN]")
 
 @dp.message(Command("done"))
 async def mark_done(message: types.Message):
@@ -193,9 +193,9 @@ async def mark_done(message: types.Message):
             cell = sheet.find(token)
             sheet.update_cell(cell.row, 10, "Success")
             user_id = sheet.cell(cell.row, 3).value
-            await bot.send_message(user_id, f"✅ আপনার অর্ডার সাকসেসফুল হয়েছে! টোকেন: {token}")
+            await bot.send_message(user_id, f"✅ Your order has been successful! Token: {token}")
             await message.answer(f"Token {token} marked Success!")
-        except: await message.answer("Error.")
+        except: await message.answer("Error processing request.")
 
 @dp.message(Command("broadcast"))
 async def broadcast(message: types.Message):
@@ -205,7 +205,7 @@ async def broadcast(message: types.Message):
         for user_id in users:
             try: await bot.send_message(user_id, text)
             except: continue
-        await message.answer("Broadcast sent.")
+        await message.answer("Broadcast sent successfully.")
 
 @dp.message(Command("search"))
 async def search_order(message: types.Message):
