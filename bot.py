@@ -21,6 +21,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 SHEET_NAME = os.getenv("SHEET_NAME")
 
+# ⚠️ আপনার চ্যানেল দুটির ইউজারনেম (@ সহ) অথবা প্রাইভেট আইডি এখানে বসান
+CHANNEL_1_ID = "@Cyber_Shield_official" 
+CHANNEL_2_ID = "@fegasus_1" 
+
 # Google Sheets Setup
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 creds_dict = json.loads(os.getenv("GOOGLE_JSON"))
@@ -80,7 +84,24 @@ async def cmd_start(message: types.Message):
 
 @dp.callback_query(F.data == "verified")
 async def process_verify(callback: types.CallbackQuery):
-    await callback.message.edit_text("Verified! Select Service:", reply_markup=get_main_menu())
+    user_id = callback.from_user.id
+    
+    try:
+        # উভয় চ্যানেলের মেম্বারশিপ স্ট্যাটাস চেক করা হচ্ছে
+        member1 = await bot.get_chat_member(chat_id=CHANNEL_1_ID, user_id=user_id)
+        member2 = await bot.get_chat_member(chat_id=CHANNEL_2_ID, user_id=user_id)
+        
+        # অনুমোদিত স্ট্যাটাসগুলোর তালিকা
+        allowed_statuses = ["member", "administrator", "creator"]
+        
+        if member1.status in allowed_statuses and member2.status in allowed_statuses:
+            await callback.message.edit_text("Verified! Select Service:", reply_markup=get_main_menu())
+        else:
+            await callback.answer("❌ আপনি এখনও সব চ্যানেলে জয়েন করেননি! দয়া করে দুটি চ্যানেলেই জয়েন করে আবার চেষ্টা করুন।", show_alert=True)
+            
+    except Exception as e:
+        # বট যদি চ্যানেলে অ্যাডমিন না থাকে তবে এই এরর আসতে পারে
+        await callback.answer("⚠️ ভেরিফিকেশন চেক করতে সমস্যা হচ্ছে। নিশ্চিত করুন বটটি চ্যানেলে অ্যাডমিন আছে কিনা।", show_alert=True)
 
 @dp.callback_query(F.data == "insta_menu")
 async def insta_menu(callback: types.CallbackQuery):
